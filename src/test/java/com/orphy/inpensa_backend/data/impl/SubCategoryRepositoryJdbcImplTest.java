@@ -1,8 +1,9 @@
 package com.orphy.inpensa_backend.data.impl;
 
-import com.orphy.inpensa_backend.exceptions.data.ResourceNotFoundException;
-import com.orphy.inpensa_backend.exceptions.data.UnExpectedException;
-import com.orphy.inpensa_backend.model.SubCategory;
+import com.orphy.inpensa_backend.v1.data.ResourceNotFoundException;
+import com.orphy.inpensa_backend.v1.exceptions.UnExpectedException;
+import com.orphy.inpensa_backend.v1.model.SubCategory;
+import com.orphy.inpensa_backend.v1.data.impl.SubCategoryRepositoryJdbcImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
@@ -82,7 +83,7 @@ class SubCategoryRepositoryJdbcImplTest {
     }
 
     @Test
-    void getAllSubCategoriesByUser_UnHappyPath() {
+    void getAllSubCategoriesByUser_NonExistingUserId_UnHappyPath() {
 
         //Arrange
         final String NON_EXISTENT_ID = "6b111111-59b1-4716-b583-9a0c4d0e5191";
@@ -96,21 +97,7 @@ class SubCategoryRepositoryJdbcImplTest {
 
 
     @Test
-    void getSubCategoryByIdAndByUser_HappyPath() {
-
-        //Arrange
-        final SubCategory expectedCategory = getExpectedCategoryWithId(SUB_CATEGORY_ID, EXPECTED_SUB_CAT, CATEGORY_ID, USER_ID);
-
-        //Act
-        SubCategory subCategory = subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(SUB_CATEGORY_ID, USER_ID);
-
-        //Assert
-        assertNotNull(subCategory);
-        assertEquals(expectedCategory, subCategory);
-    }
-
-    @Test
-    void getSubCategoryById_Admin_HappyPath() {
+    void getSubCategoryById_HappyPath() {
 
         //Arrange
         final SubCategory expectedCategory = getExpectedCategoryWithId(SUB_CATEGORY_ID, EXPECTED_SUB_CAT, CATEGORY_ID, USER_ID);
@@ -124,14 +111,13 @@ class SubCategoryRepositoryJdbcImplTest {
     }
 
     @Test
-    void getSubCategoryByIdAndByUser_UnHappyPath() {
+    void getSubCategoryById_NonExistingId_UnHappyPath() {
 
         //Arrange
         final UUID NON_EXISTENT_ID = UUID.fromString("6b111111-59b1-4716-b583-9a0c4d0e5191");
-        final SubCategory expectedCategory = getExpectedCategoryWithId(SUB_CATEGORY_ID, EXPECTED_SUB_CAT, CATEGORY_ID, USER_ID);
 
         //Act && Assert
-        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(NON_EXISTENT_ID, USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryById(NON_EXISTENT_ID));
     }
 
     @Test
@@ -178,9 +164,9 @@ class SubCategoryRepositoryJdbcImplTest {
 
         //Act
         final List<SubCategory> subCategoryListBefore = subCategoryRepositoryJdbc.getAllSubCategoriesByUser(USER_ID);
-        final SubCategory subCategoryBefore = subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(SUB_CATEGORY_ID, USER_ID);
+        final SubCategory subCategoryBefore = subCategoryRepositoryJdbc.getSubCategoryById(SUB_CATEGORY_ID);
         subCategoryRepositoryJdbc.updateSubCategory(updateSubCategory);
-        final SubCategory subCategoryAfter = subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(SUB_CATEGORY_ID, USER_ID);
+        final SubCategory subCategoryAfter = subCategoryRepositoryJdbc.getSubCategoryById(SUB_CATEGORY_ID);
         final List<SubCategory> subCategoryListAfter = subCategoryRepositoryJdbc.getAllSubCategoriesByUser(USER_ID);
 
         //Assert
@@ -217,9 +203,9 @@ class SubCategoryRepositoryJdbcImplTest {
 
         //Act
         final List<SubCategory> subCategoryListBefore = subCategoryRepositoryJdbc.getAllSubCategoriesByUser(USER_ID);
-        final SubCategory subCategoryBefore = subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(SUB_CATEGORY_ID, USER_ID);
+        final SubCategory subCategoryBefore = subCategoryRepositoryJdbc.getSubCategoryById(SUB_CATEGORY_ID);
         subCategoryRepositoryJdbc.deleteSubCategory(SUB_CATEGORY_ID);
-        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(SUB_CATEGORY_ID, USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryById(SUB_CATEGORY_ID));
         final List<SubCategory> subCategoryListAfter = subCategoryRepositoryJdbc.getAllSubCategoriesByUser(USER_ID);
 
         //Assert
@@ -236,9 +222,9 @@ class SubCategoryRepositoryJdbcImplTest {
         final UUID NON_EXISTENT_ID = UUID.fromString("6b111111-59b1-4716-b583-9a0c4d0e5191");
 
         //Act
-        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(NON_EXISTENT_ID, USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryById(NON_EXISTENT_ID));
         assertThrows(UnExpectedException.class, () -> subCategoryRepositoryJdbc.deleteSubCategory(NON_EXISTENT_ID));
-        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryByIdAndUser(NON_EXISTENT_ID, USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> subCategoryRepositoryJdbc.getSubCategoryById(NON_EXISTENT_ID));
         final List<SubCategory> subCategoryListAfter = subCategoryRepositoryJdbc.getAllSubCategoriesByUser(USER_ID);
 
         //Assert

@@ -1,15 +1,15 @@
 package com.orphy.inpensa_backend.data.impl;
 
-import com.orphy.inpensa_backend.exceptions.data.ResourceNotFoundException;
-import com.orphy.inpensa_backend.exceptions.data.UnExpectedException;
-import com.orphy.inpensa_backend.model.Transaction;
-import com.orphy.inpensa_backend.model.TransactionType;
+import com.orphy.inpensa_backend.v1.data.ResourceNotFoundException;
+import com.orphy.inpensa_backend.v1.exceptions.UnExpectedException;
+import com.orphy.inpensa_backend.v1.model.Transaction;
+import com.orphy.inpensa_backend.v1.model.TransactionType;
+import com.orphy.inpensa_backend.v1.data.impl.TransactionRepositoryJdbcImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @JdbcTest
 @Sql({"/data/schema.sql", "/data/transaction/test-data.sql"})
 class TransactionRepositoryJdbcImplTest {
-    private final TransactionRepositoryJdbcImpl transactionRepositoryJdbc;
+    private final TransactionRepositoryJdbcImpl transactionRepositoryJdbcImpl;
 
     private static final String USER_ID = "6b246024-59b1-4716-b583-9a0c4d0e5191";
     private static final String USER_ID_TWO = "6b246024-59b1-4716-b583-9a0c4d0e5111";
@@ -33,7 +33,7 @@ class TransactionRepositoryJdbcImplTest {
 
     @Autowired
     public TransactionRepositoryJdbcImplTest(JdbcTemplate jdbcTemplate) {
-        transactionRepositoryJdbc = new TransactionRepositoryJdbcImpl(jdbcTemplate);
+        this.transactionRepositoryJdbcImpl = new TransactionRepositoryJdbcImpl(jdbcTemplate);
     }
 
     @Test
@@ -42,7 +42,7 @@ class TransactionRepositoryJdbcImplTest {
         final Transaction expectedTransaction = getExpectedTransactionWithId(TRANSACTION_ID);
 
         //Act
-        List<Transaction> transactionList = transactionRepositoryJdbc.getAllTransactionsByUser(USER_ID);
+        List<Transaction> transactionList = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
 
         //Assert
         assertEquals(1, transactionList.size());
@@ -56,7 +56,7 @@ class TransactionRepositoryJdbcImplTest {
         final Transaction expectedTransaction = getExpectedTransactionWithIdAndUserId(TRANSACTION_ID_TWO, USER_ID_TWO);
 
         //Act
-        List<Transaction> transactionList = transactionRepositoryJdbc.getAllTransactionsByUser(USER_ID_TWO);
+        List<Transaction> transactionList = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID_TWO);
 
         //Assert
         assertEquals(1, transactionList.size());
@@ -71,7 +71,7 @@ class TransactionRepositoryJdbcImplTest {
         final Transaction expectedTransactionTwo = getExpectedTransactionWithIdAndUserId(TRANSACTION_ID_TWO, USER_ID_TWO);
 
         //Act
-        final List<Transaction> transactionList = transactionRepositoryJdbc.getAllTransactions();
+        final List<Transaction> transactionList = transactionRepositoryJdbcImpl.getAllTransactions();
 
         //Assert
         assertEquals(2, transactionList.size());
@@ -85,32 +85,19 @@ class TransactionRepositoryJdbcImplTest {
         final String userId = "Non Existant";
 
         //Act
-        List<Transaction> transactionList = transactionRepositoryJdbc.getAllTransactionsByUser(userId);
+        List<Transaction> transactionList = transactionRepositoryJdbcImpl.getAllTransactionsByUser(userId);
 
         //Assert
         assertEquals(0, transactionList.size());
     }
 
     @Test
-    public void getTransactionByIdAndByUser_HappyPath() {
+    public void getTransactionById_HappyPath() {
         //Arrange
         final Transaction expectedTransaction = getExpectedTransactionWithId(TRANSACTION_ID);
 
         //Act
-        Transaction actualTransaction = transactionRepositoryJdbc.getTransactionByIdAndUser(TRANSACTION_ID, USER_ID);
-
-        //Assert
-        assertNotNull(actualTransaction);
-        assertEquals(expectedTransaction, actualTransaction);
-    }
-
-    @Test
-    public void getTransactionById_Admin_HappyPath() {
-        //Arrange
-        final Transaction expectedTransaction = getExpectedTransactionWithId(TRANSACTION_ID);
-
-        //Act
-        Transaction actualTransaction = transactionRepositoryJdbc.getTransactionById(TRANSACTION_ID);
+        Transaction actualTransaction = transactionRepositoryJdbcImpl.getTransactionById(TRANSACTION_ID);
 
         //Assert
         assertNotNull(actualTransaction);
@@ -123,7 +110,7 @@ class TransactionRepositoryJdbcImplTest {
         final UUID nonExisting = UUID.fromString("6b246024-50b1-4706-b503-9a0c4d0e5191");
 
         //Act && Assert
-        assertThrows(ResourceNotFoundException.class, () -> transactionRepositoryJdbc.getTransactionByIdAndUser(nonExisting, USER_ID), "Transaction not found");
+        assertThrows(ResourceNotFoundException.class, () -> transactionRepositoryJdbcImpl.getTransactionById(nonExisting), "Transaction not found");
     }
 
     @Test
@@ -132,10 +119,10 @@ class TransactionRepositoryJdbcImplTest {
         final Transaction saveTransaction = getTransactionWithoutId();
 
         //Act
-        Transaction savedTransaction = transactionRepositoryJdbc.saveTransaction(saveTransaction);
+        Transaction savedTransaction = transactionRepositoryJdbcImpl.saveTransaction(saveTransaction);
         Transaction expectedTransaction = getExpectedTransactionWithId(savedTransaction.id());
 
-        List<Transaction> transactionList = transactionRepositoryJdbc.getAllTransactionsByUser(USER_ID);
+        List<Transaction> transactionList = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
         assertEquals(2, transactionList.size());
         assertEquals(expectedTransaction, savedTransaction);
     }
@@ -146,7 +133,7 @@ class TransactionRepositoryJdbcImplTest {
         final Transaction saveTransaction = getInvalidTransaction();
 
         //Act && Assert
-        assertThrows(DataIntegrityViolationException.class, () -> transactionRepositoryJdbc.saveTransaction(saveTransaction), "NULL not allowed for column \"TAG\"");
+        assertThrows(DataIntegrityViolationException.class, () -> transactionRepositoryJdbcImpl.saveTransaction(saveTransaction), "NULL not allowed for column \"TAG\"");
     }
 
     @Test
@@ -156,14 +143,16 @@ class TransactionRepositoryJdbcImplTest {
         final Transaction updateTransaction = updateAmountTransaction(oriTransaction, 60);
 
         //Act
-        transactionRepositoryJdbc.updateTransaction(updateTransaction);
+        List<Transaction> transactionsBefore = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
+        transactionRepositoryJdbcImpl.updateTransaction(updateTransaction);
+        List<Transaction> transactionsAfter = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
 
         //Assert
-        Transaction actualTransaction = transactionRepositoryJdbc.getTransactionByIdAndUser(TRANSACTION_ID, USER_ID);
-        List<Transaction> transactions = transactionRepositoryJdbc.getAllTransactionsByUser(USER_ID);
+        Transaction actualTransaction = transactionRepositoryJdbcImpl.getTransactionById(TRANSACTION_ID);
 
         assertEquals(60, actualTransaction.amount());
-        assertEquals(1, transactions.size());
+        assertEquals(1, transactionsBefore.size());
+        assertEquals(1, transactionsAfter.size());
     }
 
     @Test
@@ -174,7 +163,7 @@ class TransactionRepositoryJdbcImplTest {
         final Transaction updateTransaction = updateAmountTransaction(oriTransaction, 60);
 
         //Act && Assert
-        assertThrows(UnExpectedException.class, () -> transactionRepositoryJdbc.updateTransaction(updateTransaction), "Error updating transaction with id: " + nonExistentId);
+        assertThrows(UnExpectedException.class, () -> transactionRepositoryJdbcImpl.updateTransaction(updateTransaction), "Error updating transaction with id: " + nonExistentId);
     }
 
 
@@ -184,13 +173,14 @@ class TransactionRepositoryJdbcImplTest {
         //Arrange
 
         //Act
-        transactionRepositoryJdbc.deleteTransaction(TRANSACTION_ID);
+        final List<Transaction> transactionsBefore = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
+        transactionRepositoryJdbcImpl.deleteTransaction(TRANSACTION_ID);
+        final List<Transaction> transactionsAfter = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
 
         //Assert
-        assertThrows(ResourceNotFoundException.class, () -> transactionRepositoryJdbc.getTransactionByIdAndUser(TRANSACTION_ID, USER_ID), "Transaction not found");
-        List<Transaction> transactions = transactionRepositoryJdbc.getAllTransactionsByUser(USER_ID);
-
-        assertEquals(0, transactions.size());
+        assertThrows(ResourceNotFoundException.class, () -> transactionRepositoryJdbcImpl.getTransactionById(TRANSACTION_ID), "Transaction not found");
+        assertEquals(1, transactionsBefore.size());
+        assertEquals(0, transactionsAfter.size());
     }
 
 
@@ -200,14 +190,16 @@ class TransactionRepositoryJdbcImplTest {
         final UUID nonExistentId = UUID.fromString("5b987531-59b1-4716-b583-9a0c4d0e5191");
 
         //Act
-        assertThrows(UnExpectedException.class, () -> transactionRepositoryJdbc.deleteTransaction(nonExistentId), "hi");
+        final List<Transaction> transactionsBefore = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
+        assertThrows(UnExpectedException.class, () -> transactionRepositoryJdbcImpl.deleteTransaction(nonExistentId), "hi");
+        final List<Transaction> transactionsAfter = transactionRepositoryJdbcImpl.getAllTransactionsByUser(USER_ID);
 
         //Assert
-        Transaction transaction =  transactionRepositoryJdbc.getTransactionByIdAndUser(TRANSACTION_ID, USER_ID);
-        List<Transaction> transactions = transactionRepositoryJdbc.getAllTransactionsByUser(USER_ID);
+        Transaction transaction =  transactionRepositoryJdbcImpl.getTransactionById(TRANSACTION_ID);
 
         assertEquals(56, transaction.amount());
-        assertEquals(1, transactions.size());
+        assertEquals(1, transactionsBefore.size());
+        assertEquals(1, transactionsAfter.size());
     }
 
     private Transaction updateAmountTransaction(Transaction transaction, int newAmount) {

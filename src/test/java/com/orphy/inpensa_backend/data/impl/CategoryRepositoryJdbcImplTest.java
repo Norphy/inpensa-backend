@@ -1,8 +1,9 @@
 package com.orphy.inpensa_backend.data.impl;
 
-import com.orphy.inpensa_backend.exceptions.data.ResourceNotFoundException;
-import com.orphy.inpensa_backend.exceptions.data.UnExpectedException;
-import com.orphy.inpensa_backend.model.Category;
+import com.orphy.inpensa_backend.v1.data.ResourceNotFoundException;
+import com.orphy.inpensa_backend.v1.exceptions.UnExpectedException;
+import com.orphy.inpensa_backend.v1.model.Category;
+import com.orphy.inpensa_backend.v1.data.impl.CategoryRepositoryJdbcImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
@@ -91,22 +92,7 @@ class CategoryRepositoryJdbcImplTest {
     }
 
     @Test
-    void getCategoryByIdAndUser_HappyPath() {
-
-        //Arrange
-        final Category expectedCategory = getExpectedCategoryWithId(CATEGORY_ID, CATEGORY_ONE, USER_ID);
-
-        //Act
-        Category actualCategory = categoryRepositoryJdbc.getCategoryByIdAndUser(CATEGORY_ID, USER_ID);
-
-        //Assert
-        assertNotNull(actualCategory);
-        assertEquals(expectedCategory, actualCategory);
-    }
-
-
-    @Test
-    void getCategoryById_Admin_HappyPath() {
+    void getCategoryById_HappyPath() {
 
         //Arrange
         final Category expectedCategory = getExpectedCategoryWithId(CATEGORY_ID, CATEGORY_ONE, USER_ID);
@@ -119,14 +105,14 @@ class CategoryRepositoryJdbcImplTest {
         assertEquals(expectedCategory, actualCategory);
     }
 
+
     @Test
-    void getCategoryByIdAndUser_UnHappyPath() {
+    void getCategoryById_UnHappyPath() {
         //Arrange
-        final String NON_EXISTENT_USER_ID = "6b111111-59b1-4716-b583-9a0c4d0e5191";
         final UUID NON_EXISTENT_ID = UUID.fromString("6b111111-59b1-4716-b583-9a0c4d0e5191");
 
         //Act && Assert
-        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryByIdAndUser(NON_EXISTENT_ID, NON_EXISTENT_USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryById(NON_EXISTENT_ID));
     }
 
     @Test
@@ -171,10 +157,10 @@ class CategoryRepositoryJdbcImplTest {
         final Category oriCategory = getExpectedCategoryWithId(CATEGORY_ID, expectedChangedCategory, USER_ID);
 
         //Act
-        final Category categoryBefore = categoryRepositoryJdbc.getCategoryByIdAndUser(CATEGORY_ID, USER_ID);
+        final Category categoryBefore = categoryRepositoryJdbc.getCategoryById(CATEGORY_ID);
         final List<Category> listOfCategoriesBefore = categoryRepositoryJdbc.getAllCategoriesByUser(USER_ID);
         categoryRepositoryJdbc.updateCategory(oriCategory);
-        final Category categoryAfter = categoryRepositoryJdbc.getCategoryByIdAndUser(CATEGORY_ID, USER_ID);
+        final Category categoryAfter = categoryRepositoryJdbc.getCategoryById(CATEGORY_ID);
         final List<Category> listOfCategoriesAfter = categoryRepositoryJdbc.getAllCategoriesByUser(USER_ID);
 
         //Assert
@@ -194,10 +180,10 @@ class CategoryRepositoryJdbcImplTest {
         final Category oriCategory = getExpectedCategoryWithId(NON_EXISTENT_ID, expectedChangedCategory, USER_ID);
 
         //Act && Assert
-        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryByIdAndUser(NON_EXISTENT_ID, USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryById(NON_EXISTENT_ID));
         final List<Category> listOfCategoriesBefore = categoryRepositoryJdbc.getAllCategoriesByUser(USER_ID);
         assertThrows(UnExpectedException.class, () -> categoryRepositoryJdbc.updateCategory(oriCategory));
-        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryByIdAndUser(NON_EXISTENT_ID, USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryById(NON_EXISTENT_ID));
         final List<Category> listOfCategoriesAfter = categoryRepositoryJdbc.getAllCategoriesByUser(USER_ID);
 
         //Assert
@@ -212,10 +198,10 @@ class CategoryRepositoryJdbcImplTest {
 
         //Act
         final List<Category> listOfCategoriesBefore = categoryRepositoryJdbc.getAllCategoriesByUser(USER_ID);
-        final Category categoryBefore = categoryRepositoryJdbc.getCategoryByIdAndUser(CATEGORY_ID, USER_ID);
+        final Category categoryBefore = categoryRepositoryJdbc.getCategoryById(CATEGORY_ID);
         categoryRepositoryJdbc.deleteCategory(CATEGORY_ID);
         final List<Category> listOfCategoriesAfter= categoryRepositoryJdbc.getAllCategoriesByUser(USER_ID);
-        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryByIdAndUser(CATEGORY_ID, USER_ID));
+        assertThrows(ResourceNotFoundException.class, () -> categoryRepositoryJdbc.getCategoryById(CATEGORY_ID));
 
         //Assert
         assertNotNull(categoryBefore);
